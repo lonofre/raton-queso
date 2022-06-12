@@ -127,3 +127,105 @@ repetir(N, L, Lista) :-
     N1 is N-1,
     repetir(N1, L, Repetidos),
     append([L], Repetidos, Lista).
+
+    /*
+    Para los movimientos pueden asignarse un numero para poder generar un movimiento al azar para simular el movimiento del raton
+    */
+/*
+*
+Movimientos para el ratón dependiendo si está sobrio o ebrio.
+*/
+estado((X,Y),Orientacion_Inicial,C,Est_Raton,P,O,Est_Raton):-
+estadoAuxiliar((X,Y),Orientacion_Inicial,C,Est_Raton,P,O,Est_Raton).
+
+estadoAuxiliar((Xi,Yi),Oi,[],Est_Raton,(Xi,Yi),Oi,_).
+estadoAuxiliar((Xi,Yi),Oi,[C|T],Est_Raton,Pf,Of,_):-
+	movimiento((Xi,Yi),Oi,C,Est_Raton,P1,O1),estadoAuxiliar(P1,O1,T,Est_Raton,Pf,Of,_).
+
+/**Funcion que simula un paso al frente que hace el raton sin alterar su orientacion*/
+
+movimiento((Xi,Yi),north,avanzar,Est_Raton,(Xi,Yf),north):-
+Yf is Yi+1.
+movimiento((Xi,Yi),south,avanzar,Est_Raton,(Xi,Yf),south):-
+Yf is Yi-1.
+movimiento((Xi,Yi),east,avanzar,Est_Raton,(Xf,Yi),east):-
+Xf is Xi+1.
+movimiento((Xi,Yi),west,avanzar,Est_Raton,(Xf,Yi),west):-
+Xf is Xi-1.
+/**
+estado((0,0),north,[avanzar,avanzar,giraD,giraI,giraI,avanzar,avanzar],sobrio,P,O,E).
+*/
+/**Funcion que hace girar hacia la izquierda al raton, modificando la orientacion*/
+
+movimiento((Xi,Yi),Oi,giraI,Est_Raton,(Xi,Yi),Of):-
+giroIzq(Oi,giraI,Of).
+
+/**Funcion que hace girar hacia la derecha al raton, así como su orientacion*/
+
+movimiento((Xi,Yi),Oi,giraD,Est_Raton,(Xi,Yi),Of):-
+giroDer(Oi,giraD,Of).
+
+/**Funcion que hace al raton dar media vuelta, de acuerdo a su orientacion*/
+
+movimiento((Xi,Yi),Oi,gira180,Est_Raton,(Xi,Yi),Of):-
+giro180(Oi,gira180,Of).
+
+/**Funcion para que el raton pueda comer un queso*/
+
+movimiento((Xi,Yi),Oi,comerQueso,Est_Raton,(Xi,Yi),Of):-comerQueso(Est_Raton,T_Queso,Estado_Raton_F).
+
+/**Funcion auxiliar que realiza las respectivas rotaciones de acuerdo a la direccion que está mirando el raton*/
+
+giro180(north,gira180,south).
+giro180(south,gira180,north).
+giro180(east,gira180,west).
+giro180(west,gira180,east).
+
+/**Funcion auxiliar que realiza las respectivas rotaciones hacia la izquierda de acuerdo a la direccion que está mirando el raton*/
+
+giroIzq(north,giraI,west).
+giroIzq(south,giraI,east).
+giroIzq(east,giraI,north).
+giroIzq(west,giraI,south).
+
+/**Funcion auxiliar que realiza las respectivas rotaciones hacia la derecha de acuerdo a la direccion que está mirando el raton*/
+
+giroDer(north,giraD,east).
+giroDer(south,giraD,west).
+giroDer(east,giraD,south).
+giroDer(west,giraD,north).
+
+/**Funcion auxiliar que revisa el tipo de queso a comer y devolviendo el estado que tiene el raton despues de consumirlo*/
+
+comerQueso(Estado_Raton_I,T_Queso,Estado_Raton_F):-tipoQueso(Estado_Raton_I,T_Queso,Estado_Raton_F).
+
+/**
+queso(0, normal).
+queso(1, vino).
+queso(2, veneno).
+*/
+
+/**Base de conocimientos que muestra el comportamiento del raton luego de comer un determinado queso de acuerdo a su estado actual*/
+
+tipoQueso(sobrio,normal,sobrio).
+tipoQueso(ebrio,normal,ebrio).
+tipoQueso(sobrio,vino,ebrio).
+tipoQueso(ebrio,normal,ebrio).
+tipoQueso(ebrio,veneno,muerto).
+tipoQueso(sobrio,veneno,sobrio).
+
+/**
+Base de conocimientos que figura las acciones que puede hacer el raton para agregarlos a una lista simulando que el raton actua por voluntad propia
+*/
+accion(0,avanzar).
+accion(1,giraI).
+accion(2,giraD).
+accion(3,gira180).
+
+/**
+Funcion que genera un movimiento al azar de acuerdo a la base de conocimientos implementado anteriormente
+*/
+
+generarMovimiento(A):- random(0,3,X),accion(X,A).
+
+
