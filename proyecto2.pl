@@ -35,12 +35,13 @@ recRat((Xi,Yi),Oi,Ei,M,true,false) :-
     orientaYAvanza((Xi,Yi),Oi,M,Ei,Om,(Xf,Yf),Em),
     vaComerAlcohol((Xf,Yf),M,Alcohol),
     noVaComerVeneno((Xf,Yf),M,Em,NoVeneno),
-    comeQueso((Xi,Yf),M,MapaMenosQueso),
+    comeQueso((Xf,Yf),M,MapaMenosQueso),
     Ef is Em+Alcohol,
-    write(Em),
+    write('Ebriedad: '),
+    write(Ef),
     desorientaPorAlcohol(Om,Ef,Of),
     sale((Xf,Yf),M,Sale),
-    recRat((Xi,Yf),Of,Ef,MapaMenosQueso,NoVeneno,Sale).
+    recRat((Xf,Yf),Of,Ef,MapaMenosQueso,NoVeneno,Sale).
 
 
 
@@ -99,22 +100,18 @@ orientaYAvanza((X,Y),O,M,Ei,O,(X,Y),0) :-
 
 /*Auxiliar que dice si se va a chocar con pared*/ 
 vaChocar((_,Yi),north,M,true) :-
-    write(vACHOCAR1),
     length(M,A),
     Yi =:= A-1.
 vaChocar((Xi,_),east,[H|_],true) :-
-    write(vACHOCAR2),
     length(H,A),
     Xi =:= A-1.
-vaChocar((0,_),west,_,true):-
-    write(vACHOCAR3).
-vaChocar((_,0),south,_,true):-
-    write(vACHOCAR4).
+vaChocar((0,_),west,_,true).
+vaChocar((_,0),south,_,true).
 
 vaChocar((_,Yi),north,M,false) :-
     length(M,A),
     Yi =\= A-1.
-vaChocar((Xi,_),east,[H|_],true) :-
+vaChocar((Xi,_),east,[H|_],false) :-
     length(H,A),
     Xi =\= A-1.
 vaChocar((X,_),west,_,false) :-
@@ -126,31 +123,35 @@ vaChocar((_,Y),south,_,false) :-
 avanza((X,Yi),north,(X,Yf)) :-
     Yf is Yi+1,
     write('\n -'),
+    write((X,Yi)),
     write(north),
     write((X,Yf)),
     write('-\n').
 avanza((Xi,Y),east,(Xf,Y)) :-
     Xf is Xi+1,
     write('\n -'),
+    write((Xi,Y)),
     write(east),
     write((Xf,Y)),
     write('-\n'). 
 avanza((X,Yi),south,(X,Yf)) :-
     Yf is Yi-1,
     write('\n -'),
+    write((X,Yi)),
     write(south),
     write((X,Yf)),
     write('-\n').
 avanza((Xi,Y),west,(Xf,Y)) :-
     Xf is Xi-1,
     write(-),
+    write((Xi,Y)),
     write(west),
     write((Xf,Y)),
     write('-\n').
 
 /**Auxiliar que dice que se choca en la orientación dada
 debería imprimir Ei veces la orientación O. 
-[NOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO est'a bien implementada, es relleno]
+[NOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO la he hecho bien]
 */ 
 choca(Ei,O) :-     
     write(ebriochoca),     
@@ -292,5 +293,4 @@ ori(3,south).
 Genera una orientación al azar usando la base de conocimientos anterior.
 */
 generarOri(A):- random(0,4,X),ori(X,A).
-
 
