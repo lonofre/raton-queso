@@ -12,6 +12,31 @@ crear_mapa(N, M, Mapa) :-
     posicion_salida(N, M, Salida),
     crear_mapa_salida(N, M, Salida, Mapa).
 
+
+/*
+Se obtiene el tipo de casilla en el mapa (vacio,
+normal, vino, veneno, salida)
+X: Posición en la coordenada X
+Y: Posición en la coordenada Y
+Mapa: Lista 2D con los tipos de casilla
+Tipo: El valor en la posición (X,Y)
+*/
+tipo_casilla((X, Y), Mapa, Tipo) :-
+    nth0(Y, Mapa, Fila),
+    nth0(X, Fila, Tipo).
+
+/*
+* Actualiza el tipo de la casilla de un mapa
+(X, Y): Las coordenadas del mapa
+Mapa: El mapa a actualizar
+Tipo: Tipo de casilla a cambiar (vacio, normal, vino, veneno, salida)
+MapaActualizado: El mapa resultante después de actualizar
+*/
+casilla_actualizada((X, Y), Mapa, Tipo, MapaActualizado) :-
+    nth0(Y, Mapa, Fila),
+    remplazar(Fila, X, Tipo, NuevaFila),
+    remplazar(Mapa, Y, NuevaFila, MapaActualizado).
+
 /*
 Rellena con queso al mapa
 N, M: N,M > 0, son las dimensiones del mapa
@@ -20,12 +45,12 @@ Mapa: El mapa a rellanar
 MapaConQueso: Ya el mapa con queso en sus cuadrículas al azar
 */
 rellenar_queso(_,_,MapaConQueso, [], MapaConQueso).
-rellenar_queso(N, M, Mapa, [H|T], MapaConQueso) :-
+rellenar_queso(N, M, Mapa, [Queso|T], MapaConQueso) :-
     random(0, N, X),
     random(0, M, Y),
     % Se selecciona una fila al azar
     nth0(Y, Mapa, Fila),
-    remplazar(Fila, X, H, NuevaFila),
+    remplazar(Fila, X, Queso, NuevaFila),
     remplazar(Mapa, Y, NuevaFila, MapaActualizado),
     rellenar_queso(N, M, MapaActualizado, T, MapaConQueso).
 
