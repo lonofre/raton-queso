@@ -28,15 +28,20 @@ dice que un ratón realiza un recorrido donde:
 -S es el estado de llegada del ratón a la salida
 */
 recRat(_,_,_,_,false,_) :-
-	write(-muere).
+	write('\n'),
+	write('*MUERE*'),
+	write('\n').
 recRat(_,_,_,_,_,true) :-
-	write(-sale).
+	write('\n'),
+	write('*SALE*'),
+	write('\n').
 recRat((Xi,Yi),Oi,Ei,M,true,false) :-
     orientaYAvanza((Xi,Yi),Oi,M,Ei,Om,(Xf,Yf),Em),
     vaComerAlcohol((Xf,Yf),M,Alcohol),
     noVaComerVeneno((Xf,Yf),M,Em,NoVeneno),
     comeQueso((Xf,Yf),M,MapaMenosQueso),
     Ef is Em+Alcohol,
+    write('|'),
     write('Ebriedad: '),
     write(Ef),
     desorientaPorAlcohol(Om,Ef,Of),
@@ -143,7 +148,7 @@ avanza((X,Yi),south,(X,Yf)) :-
     write('-\n').
 avanza((Xi,Y),west,(Xf,Y)) :-
     Xf is Xi-1,
-    write(-),
+    write('\n -'),
     write((Xi,Y)),
     write(west),
     write((Xf,Y)),
@@ -159,8 +164,7 @@ choca(Ei,O) :-
     
 /*Auxiliar que dice que se baja el nivel de alcohol si es mayor a 0, en 1*/    
 bajaAlcohol(0,Em) :- Em is 0.
-bajaAlcohol(Ei,Em) :- Ei =\= 0, Em is Ei-1,
-    write(\v)     .
+bajaAlcohol(Ei,Em) :- Ei =\= 0, Em is Ei-1.
     
 
 
@@ -222,7 +226,11 @@ MapaMenosQueso es el resultado de quitar el queso en (X,Y) a M
 comeQueso((X,Y),M,MapaMenosQueso) :-
     nth0(Y,M,Fila),
     remplazar(Fila,X,vacio,FilaMenosQueso),
-    remplazar(M,Y,FilaMenosQueso,MapaMenosQueso).
+    remplazar(M,Y,FilaMenosQueso,MapaMenosQueso),
+    write('\n'),
+    write('\n'),
+    write(MapaMenosQueso),
+    write('\n').
 
 
 
