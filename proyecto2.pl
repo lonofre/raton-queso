@@ -41,13 +41,13 @@ recRat((Xi,Yi),Oi,Ei,M,true,false) :-
     orientaYAvanza((Xi,Yi),Oi,M,Ei,Of,(Xf,Yf),Em),
     vaComerAlcohol((Xf,Yf),M,Alcohol),
     noVaComerVeneno((Xf,Yf),M,Em,NoVeneno),
-    comeQueso((Xf,Yf),M,MapaMenosQueso),
+    comeQueso((Xf,Yf),M,NoVeneno,M2),
     Ef is Em+Alcohol,
     write(' |\n'),
     write(' Ebriedad: '),
     write(Ef),
     sale((Xf,Yf),M,Sale),
-    recRat((Xf,Yf),Of,Ef,MapaMenosQueso,NoVeneno,Sale).
+    recRat((Xf,Yf),Of,Ef,M2,NoVeneno,Sale).
 
 
 
@@ -229,18 +229,46 @@ noVaComerVeneno(_,_,0,true).
 
 
 /**
-comeQueso((X,Y),M,MapaMenosQueso) dice que el queso en el mapa fue comido y por lo tanto desapareció, donde:
+comeQueso((X,Y),M,MapaMenosQueso) dice que si hay un queso en una 
+posición del mapa y el ratón lo come, entonces desaparece del mapa y
+en su lugar queda un vacío, donde:
 -(X,Y) es la posición en que se encontraba el queso
 -M es el mapa con respecto al cuál se encuentra la posición
--MapaMenosQueso es el resultado de quitar el queso al mapa
+-NoVeneno es false si y sólo si el ratón comerá un queso envenenado
+-M2 es el resultado de quitar el queso al mapa si sí hay un queso en
+ la posición y sí se come 
 */
-comeQueso((X,Y),M,MapaMenosQueso) :-
+comeQueso((X,Y),M,_,M2) :-
+    tipo_casilla((X,Y),M,T),
+    T \= veneno,
+    T \= salida,
     nth0(Y,M,Fila),
-    remplazar(Fila,X,vacio,FilaMenosQueso),
-    remplazar(M,Y,FilaMenosQueso,MapaMenosQueso),
+    remplazar(Fila,X,vacio,Fila2),
+    remplazar(M,Y,Fila2,M2),
     write('\n'),
     write('\n'),
-    write(MapaMenosQueso),
+    write(M2),
+    write('\n').
+comeQueso((X,Y),M,false,M2) :-
+    tipo_casilla((X,Y),M,veneno),
+    nth0(Y,M,Fila),
+    remplazar(Fila,X,vacio,Fila2),
+    remplazar(M,Y,Fila2,M2),
+    write('\n'),
+    write('\n'),
+    write(M2),
+    write('\n').
+comeQueso((X,Y),M,true,M) :-
+    tipo_casilla((X,Y),M,veneno),
+    write('\n'),
+    write('\n'),
+    write(M),
+    write('\n').
+comeQueso((X,Y),M,_,M) :-
+    tipo_casilla((X,Y),M,salida),
+    write('\n'),
+    write('\n'),
+    write(M),
     write('\n').
 
 
