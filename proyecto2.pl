@@ -2,108 +2,338 @@
 :- [mapa].
 
 /*
-Para los movimientos pueden asignarse un numero para poder generar 
-un movimiento al azar para simular el movimiento del raton
+*
+iRecRat(N,M,D) dice que un ratón comienza un recorrido donde:
+N es el ancho del mapa en el que se realiza el recorrido
+M es el largo del mapa en el que se realiza el recorrido
+D es la posición inicial del ratón, de la forma (X,Y)
 */
+iRecRat(N,M,D) :- 
+    crear_mapa(N, M, Mapa),
+    generarOri(O),    
+	write(Mapa),
+    write('\n |\n'),
+    write(' Ebriedad: '),
+    write(0),
+    recRat(D,O,0,Mapa,true,false).
+
+
 
 /*
 *
-Movimientos para el ratón dependiendo si está sobrio o ebrio.
+recRat((X,Y),O,E,M,V,S) dice que un ratón realiza un recorrido donde:
+-(X,Y) es la posición del ratón
+-O es la orientación del ratón
+-E es el nivel de ebriedad del ratón
+-M es el mapa en el que se realiza el recorrido
+-V es el estado de vida del ratón
+-S es el estado de llegada del ratón a la salida
 */
-estado((X,Y),Orientacion_Inicial,C,Est_Raton,P,O,Est_Raton) :-
-estado_auxiliar((X,Y),Orientacion_Inicial,C,Est_Raton,P,O,Est_Raton).
-
-estado_auxiliar((Xi,Yi),Oi,[],Est_Raton,(Xi,Yi),Oi,_).
-estado_auxiliar((Xi,Yi),Oi,[C|T],Est_Raton,Pf,Of,_) :-
-	movimiento((Xi,Yi),Oi,C,Est_Raton,P1,O1),
-    estado_auxiliar(P1,O1,T,Est_Raton,Pf,Of,_).
-
-
-/**Funcion que simula un paso al frente 
-que hace el raton sin alterar su orientacion*/
-movimiento((Xi,Yi),north,avanzar,Est_Raton,(Xi,Yf),north) :-
-    Yf is Yi+1.
-
-movimiento((Xi,Yi),south,avanzar,Est_Raton,(Xi,Yf),south) :-
-    Yf is Yi-1.
-
-movimiento((Xi,Yi),east,avanzar,Est_Raton,(Xf,Yi),east) :-
-    Xf is Xi+1.
-
-movimiento((Xi,Yi),west,avanzar,Est_Raton,(Xf,Yi),west) :-
-    Xf is Xi-1.
-
-/**Funcion que hace girar hacia la izquierda al raton, 
-modificando la orientacion*/
-
-movimiento((Xi,Yi),Oi,giraI,Est_Raton,(Xi,Yi),Of) :-
-    giro_izq(Oi,giraI,Of).
-
-/**Funcion que hace girar hacia la derecha al raton, así como su orientacion*/
-
-movimiento((Xi,Yi),Oi,giraD,Est_Raton,(Xi,Yi),Of) :-
-    giro_der(Oi,giraD,Of).
-
-/**Funcion que hace al raton dar media vuelta, de acuerdo a su orientacion*/
-
-movimiento((Xi,Yi),Oi,gira180,Est_Raton,(Xi,Yi),Of) :-
-    giro180(Oi,gira180,Of).
-
-/**Funcion para que el raton pueda comer un queso*/
-
-movimiento((Xi,Yi),Oi,comer_queso,Est_Raton,(Xi,Yi),Of) :-
-    comer_queso(Est_Raton,T_Queso,Estado_Raton_F).
-
-/**Funcion auxiliar que realiza las respectivas rotaciones 
-de acuerdo a la direccion que está mirando el raton*/
-giro180(north,gira180,south).
-giro180(south,gira180,north).
-giro180(east,gira180,west).
-giro180(west,gira180,east).
-
-/**Funcion auxiliar que realiza las respectivas 
-rotaciones hacia la izquierda de acuerdo a la direccion que está mirando el raton*/
-giro_izq(north,giraI,west).
-giro_izq(south,giraI,east).
-giro_izq(east,giraI,north).
-giro_izq(west,giraI,south).
-
-/**Funcion auxiliar que realiza las respectivas rotaciones 
-hacia la derecha de acuerdo a la direccion que está mirando el raton*/
-
-giro_der(north,giraD,east).
-giro_der(south,giraD,west).
-giro_der(east,giraD,south).
-giro_der(west,giraD,north).
-
-/**Funcion auxiliar que revisa el tipo de queso a 
-comer y devolviendo el estado que tiene el raton despues de consumirlo*/
-comer_queso(Estado_Raton_I,T_Queso,Estado_Raton_F) :-
-    tipo_queso(Estado_Raton_I,T_Queso,Estado_Raton_F).
+recRat(_,_,_,_,false,_) :-
+	write('\n'),
+	write('*MUERE*'),
+	write('\n').
+recRat(_,_,_,_,_,true) :-
+	write('\n'),
+	write('*SALE*'),
+	write('\n').
+recRat((Xi,Yi),Oi,Ei,M,true,false) :-
+    orientaYAvanza((Xi,Yi),Oi,M,Ei,Of,(Xf,Yf),Em),
+    vaComerAlcohol((Xf,Yf),M,Alcohol),
+    noVaComerVeneno((Xf,Yf),M,Em,NoVeneno),
+    comeQueso((Xf,Yf),M,NoVeneno,M2),
+    Ef is Em+Alcohol,
+    write(' |\n'),
+    write(' Ebriedad: '),
+    write(Ef),
+    sale((Xf,Yf),M,Sale),
+    recRat((Xf,Yf),Of,Ef,M2,NoVeneno,Sale).
 
 
-/**Base de conocimientos que muestra el comportamiento 
-del raton luego de comer un determinado queso de acuerdo a su estado actual*/
-tipo_queso(sobrio,normal,sobrio).
-tipo_queso(ebrio,normal,ebrio).
-tipo_queso(sobrio,vino,ebrio).
-tipo_queso(ebrio,normal,ebrio).
-tipo_queso(ebrio,veneno,muerto).
-tipo_queso(sobrio,veneno,sobrio).
 
 /**
-Base de conocimientos que figura las acciones que puede hacer 
-el raton para agregarlos a una lista simulando que el raton actua por voluntad propia
+orientaYAvanza((Xi,Yi),Oi,M,Ei,Om,(Xf,Yf),Em) dice que el ratón fija 
+la dirección hacia la que intentará avanzar e intenta avanzar, donde:
+-(Xi,Yi) es la posición inicial del ratón
+-Oi es la orientación inicial del ratón
+-M es el mapa en el que se realiza el recorrido
+-Ei es el nivel de ebriedad del ratón antes de intentar avanzar
+-Om es la orientación en la que el ratón intentará avanzar
+-(Xf,Yf) es la posición final del ratón
+-Em es el nivel de ebriedad del ratón después de intentar avanzar
+    
+Si al intentar avanzar con la orientación inicial Oi no va a chocar 
+con una pared, no cambia orientación y avanza.
+Si sí va a chocar con una pared hay 3 casos:
+- Si no está ebrio (Ei=:=0) y no está en una esquina de manera que al 
+girar a la izquierda vaya a chocar también, hace que la orientación Om 
+sea Oi girada ala izquierda y luego avanza.
+- Si la ebriedad Ei es mayor a 0, la orientación no cambia y el ratón 
+choca con la pared hasta que pase la borrachera.
+
+En todo caso disminuye la ebriedad Ei en 1 si era mayor a 0 y guarda 
+ese valor en Em después de intentar avanzar.
 */
-accion(0,avanzar).
-accion(1,giraI).
-accion(2,giraD).
-accion(3,gira180).
+%% Caso sin pared
+orientaYAvanza((Xi,Yi),Oi,M,Ei,Of,(Xf,Yf),Ef) :-
+    vaChocar((Xi,Yi),Oi,M,false),
+    avanza((Xi,Yi),Oi,(Xf,Yf)),
+    bajaAlcohol(Ei,Ef),
+    desorientaPorAlcohol(Oi,Ef,Of).    
+%% Caso con pared no esquina que requiere giro doble sin ebriedad
+orientaYAvanza((Xi,Yi),Oi,M,Ei,Om,(Xf,Yf),Em) :-
+    Ei =:= 0,
+    vaChocar((Xi,Yi),Oi,M,true),
+    giro_izq(Oi,Om),
+    vaChocar((Xi,Yi),Om,M,false),
+    avanza((Xi,Yi),Om,(Xf,Yf)),     
+    bajaAlcohol(Ei,Em).   
+%% Caso con pared esquina que requiere giro doble sin ebriedad
+orientaYAvanza((Xi,Yi),Oi,M,Ei,Om,(Xf,Yf),Em) :-
+    Ei =:= 0,
+    vaChocar((Xi,Yi),Oi,M,true),
+    giro_izq(Oi,Om1),
+    vaChocar((Xi,Yi),Om1,M,true),
+    giro_izq(Om1,Om),
+    avanza((Xi,Yi),Om,(Xf,Yf)),     
+    bajaAlcohol(Ei,Em).   
+%% Caso con pared (cualquiera) con ebriedad
+orientaYAvanza((X,Y),O,M,Ei,O,(X,Y),Em) :-
+    Ei =\= 0,
+    vaChocar((X,Y),O,M,true),
+    choca((X,Y),O,(X,Y)),     
+    bajaAlcohol(Ei,Em).                       
+
+/*Auxiliar que dice si se va a chocar con pared*/ 
+vaChocar((_,Yi),north,M,true) :-
+    length(M,A),
+    Yi =:= A-1.
+vaChocar((Xi,_),east,[H|_],true) :-
+    length(H,A),
+    Xi =:= A-1.
+vaChocar((0,_),west,_,true).
+vaChocar((_,0),south,_,true).
+
+vaChocar((_,Yi),north,M,false) :-
+    length(M,A),
+    Yi =\= A-1.
+vaChocar((Xi,_),east,[H|_],false) :-
+    length(H,A),
+    Xi =\= A-1.
+vaChocar((X,_),west,_,false) :-
+    X =\= 0.
+vaChocar((_,Y),south,_,false) :-
+    Y =\= 0.
+
+/*Auxiliar que dice que se avanza en la orientación dada*/ 
+avanza((X,Yi),north,(X,Yf)) :-
+    Yf is Yi+1,
+    write('\n ('),
+    write((X,Yi)),
+    write(') north ('),
+    write((X,Yf)),
+    write(')\n').
+avanza((Xi,Y),east,(Xf,Y)) :-
+    Xf is Xi+1,
+    write('\n ('),
+    write((Xi,Y)),
+    write(') east ('),
+    write((Xf,Y)),
+    write(')\n').
+avanza((X,Yi),south,(X,Yf)) :-
+    Yf is Yi-1,
+    write('\n ('),
+    write((X,Yi)),
+    write(') south ('),
+    write((X,Yf)),
+    write(')\n').
+avanza((Xi,Y),west,(Xf,Y)) :-
+    Xf is Xi-1,
+    write('\n ('),
+    write((Xi,Y)),
+    write(') west ('),
+    write((Xf,Y)),
+    write(')\n').
+
+/**Auxiliar que dice que se choca en la orientación dada*/ 
+choca((X,Y),O,(X,Y)) :- 
+    write('\n -'),
+    write((X,Y)),
+    write(O),
+    write((X,Y)),
+    write('-\n'),
+    write('*Choca con la pared*').
+    
+/*Auxiliar que dice que si el nivel de alcohol es mayor a 0, entonces
+ se disminuye en 1*/    
+bajaAlcohol(0,Em) :- Em is 0.
+bajaAlcohol(Ei,Em) :- Ei =\= 0, Em is Ei-1.
+    
+
 
 /**
-Funcion que genera un movimiento al azar de acuerdo 
-a la base de conocimientos implementado anteriormente
+vaComerAlcohol((X,Y),M,Alcohol) dice cuanto aumentará el nivel de 
+ebriedad del ratón al comer lo que encuentra donde:
+-(X,Y) es la posición donde el ratón encuentra lo que comerá
+-M es el mapa en el que se encuentra la posición
+-Alcohol es el valor en que aumentará el nivel de ebriedad
 */
-generarMovimiento(A):- random(0,3,X),accion(X,A).
+vaComerAlcohol((X,Y),M,7) :-
+    nth0(Y,M,Fila),
+    nth0(X,Fila,vino).
+vaComerAlcohol((X,Y),M,0) :-
+    nth0(Y,M,Fila),
+    nth0(X,Fila,vacio).
+vaComerAlcohol((X,Y),M,0) :-
+    nth0(Y,M,Fila),
+    nth0(X,Fila,veneno).
+vaComerAlcohol((X,Y),M,0) :-
+    nth0(Y,M,Fila),
+    nth0(X,Fila,normal).
+vaComerAlcohol((X,Y),M,0) :-
+    nth0(Y,M,Fila),
+    nth0(X,Fila,salida).
 
+
+
+/**
+noVaComerVeneno((X,Y),M,Em,NoVeneno) dice si un ratón va a no comer
+veneno donde:
+-(X,Y) es la posición donde el ratón puede encontrar veneno para comer
+-M es el mapa con respecto al cuál se encuentra la posición
+-Em es el nivel de ebriedad del ratón
+-NoVeneno es true si no comerá veneno y false si sí lo comerá
+*/
+noVaComerVeneno((X,Y),M,Em,false) :-
+    Em > 0,
+    nth0(Y,M,Fila),
+    nth0(X,Fila,veneno).
+noVaComerVeneno((X,Y),M,Em,true) :-
+    Em > 0,
+    nth0(Y,M,Fila),
+    nth0(X,Fila,vacio).
+noVaComerVeneno((X,Y),M,Em,true) :-
+    Em > 0,
+    nth0(Y,M,Fila),
+    nth0(X,Fila,normal).
+noVaComerVeneno((X,Y),M,Em,true) :-
+    Em > 0,
+    nth0(Y,M,Fila),
+    nth0(X,Fila,vino).
+noVaComerVeneno((X,Y),M,Em,true) :-
+    Em > 0,
+    nth0(Y,M,Fila),
+    nth0(X,Fila,salida).
+noVaComerVeneno(_,_,0,true).
+
+
+
+/**
+comeQueso((X,Y),M,MapaMenosQueso) dice que si hay un queso en una 
+posición del mapa y el ratón lo come, entonces desaparece del mapa y
+en su lugar queda un vacío, donde:
+-(X,Y) es la posición en que se encontraba el queso
+-M es el mapa con respecto al cuál se encuentra la posición
+-NoVeneno es false si y sólo si el ratón comerá un queso envenenado
+-M2 es el resultado de quitar el queso al mapa si sí hay un queso en
+ la posición y sí se come 
+*/
+comeQueso((X,Y),M,_,M2) :-
+    tipo_casilla((X,Y),M,T),
+    T \= veneno,
+    T \= salida,
+    nth0(Y,M,Fila),
+    remplazar(Fila,X,vacio,Fila2),
+    remplazar(M,Y,Fila2,M2),
+    write('\n'),
+    write('\n'),
+    write(M2),
+    write('\n').
+comeQueso((X,Y),M,false,M2) :-
+    tipo_casilla((X,Y),M,veneno),
+    nth0(Y,M,Fila),
+    remplazar(Fila,X,vacio,Fila2),
+    remplazar(M,Y,Fila2,M2),
+    write('\n'),
+    write('\n'),
+    write(M2),
+    write('\n').
+comeQueso((X,Y),M,true,M) :-
+    tipo_casilla((X,Y),M,veneno),
+    write('\n'),
+    write('\n'),
+    write(M),
+    write('\n').
+comeQueso((X,Y),M,_,M) :-
+    tipo_casilla((X,Y),M,salida),
+    write('\n'),
+    write('\n'),
+    write(M),
+    write('\n').
+
+
+
+/**
+desorientaPorAlcohol(Om,Ef,Of) dice como cambia la orientación de un
+ratón por efecto de su nivel de ebriedad, donde
+-Om es la orientación del ratón antes del cambio si lo hay
+-Ef es el nivel de ebriedad del ratón
+-Of es la orientación del ratón después del cambio si lo hay
+*/
+desorientaPorAlcohol(O,0,O).
+desorientaPorAlcohol(_,Ef,Of) :-
+    Ef > 0,
+    generarOri(Of).
+
+
+
+/**
+sale((X,Y),M,Sale) dice si el ratón sale del mapa por haber llegado
+a la posición de la salida en éste, donde:
+-(X,Y) es la posición del ratón
+-M es el mapa con respecto al cual se da la posición
+-Sale es true si el mapa tiene la salida en la posición del ratón y
+ false en otro caso
+*/
+sale((X,Y),M,true) :-
+    nth0(Y,M,Fila),
+    nth0(X,Fila,salida).
+sale((X,Y),M,false) :-
+    nth0(Y,M,Fila),
+    nth0(X,Fila,vino).
+sale((X,Y),M,false) :-
+    nth0(Y,M,Fila),
+    nth0(X,Fila,vacio).
+sale((X,Y),M,false) :-
+    nth0(Y,M,Fila),
+    nth0(X,Fila,veneno).
+sale((X,Y),M,false) :-
+    nth0(Y,M,Fila),
+    nth0(X,Fila,normal).
+
+
+
+
+
+/*
+Base de conocimientos que contiene las respectivas rotaciones hacia 
+la izquierda de acuerdo a la dirección que está mirando el ratón
+*/
+giro_izq(north,west).
+giro_izq(south,east).
+giro_izq(east,north).
+giro_izq(west,south).
+
+/*
+Base de conocimientos que contiene las posibles orientaciones.
+*/
+ori(0,west).
+ori(1,north).
+ori(2,east).
+ori(3,south).
+
+/**
+generarOri(A) dice que se genera una orientación al azar usando la base de conocimientos anterior, donde A es la orientación generada.
+*/
+generarOri(A) :- random(0,4,X),ori(X,A).
 
