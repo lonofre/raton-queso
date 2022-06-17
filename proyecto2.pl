@@ -1,129 +1,255 @@
-/*
-Crea un mapa dado:
-N: ancho del mapa, n > 0.
-M: alto, m > 0.
-Mapa: el mapa creado, que es una lista de dimensión n x m.
+% *-------------------*
+% | PARTE DE LEONARDO |
+% *-------------------*
+
+/** Función que no gira, no modifica la irientación*/
+movimientoGiro(Oi, noGira, Oi).
+
+/**Funcion que hace girar hacia la izquierda al raton, modificando la orientacion*/
+
+movimientoGiro(Oi,giraI,Of):- giroIzq(Oi,giraI,Of).
+
+/**Funcion que hace girar hacia la derecha al raton, así como su orientacion*/
+
+movimientoGiro(Oi,giraD,Of):- giroDer(Oi,giraD,Of).
+
+/**Funcion que hace al raton dar media vuelta, de acuerdo a su orientacion*/
+
+movimientoGiro(Oi,gira180,Of):- giro180(Oi,gira180,Of).
+
+/**Funcion auxiliar que realiza las respectivas rotaciones de acuerdo a la direccion que está mirando el raton*/
+
+giro180(north,gira180,south).
+giro180(south,gira180,north).
+giro180(east,gira180,west).
+giro180(west,gira180,east).
+
+/**Funcion auxiliar que realiza las respectivas rotaciones hacia la izquierda de acuerdo a la direccion que está mirando el raton*/
+
+giroIzq(north,giraI,west).
+giroIzq(south,giraI,east).
+giroIzq(east,giraI,north).
+giroIzq(west,giraI,south).
+
+/**Funcion auxiliar que realiza las respectivas rotaciones hacia la derecha de acuerdo a la direccion que está mirando el raton*/
+
+giroDer(north,giraD,east).
+giroDer(south,giraD,west).
+giroDer(east,giraD,south).
+giroDer(west,giraD,north).
+
+/**
+Base de conocimientos que figura las acciones que puede hacer el raton para agregarlos a una lista simulando que el raton actua por voluntad propia
 */
-crear_mapa(N, M, Mapa) :-
-    N > 0,
-    M > 0,
-    posicion_salida(N, M, Salida),
-    crear_mapa_salida(N, M, Salida, Mapa).
+accion(0,noGira).
+accion(1,giraI).
+accion(2,giraD).
+accion(3,gira180).
 
-/*
-Rellena con queso al mapa
-N, M: N,M > 0, son las dimensiones del mapa
-Mapa: El mapa a rellanar
-[H,T]: Lista de quesos (normal, con vino, con veneno)
-MapaConQueso: Ya el mapa con queso en sus cuadrículas al azar
+/**
+Funcion que genera un movimiento al azar de acuerdo a la base de conocimientos implementado anteriormente
 */
-rellenar_queso(_,_,MapaConQueso, [], MapaConQueso).
-rellenar_queso(N, M, Mapa, [H|T], MapaConQueso) :-
-    random(0, N, X),
-    random(0, M, Y),
-    % Se selecciona una fila al azar
-    nth0(Y, Mapa, Fila),
-    remplazar(Fila, X, H, NuevaFila),
-    remplazar(Mapa, Y, NuevaFila, MapaActualizado),
-    rellenar_queso(N, M, MapaActualizado, T, MapaConQueso).
 
-remplazar([_|T],0,E,[E|T]).
-remplazar([H|T],P,E,[H|R]) :-
-    P > 0, NP is P-1, remplazar(T,NP,E,R).
+generarMovimientoGiro(A):- random(0,3,X),accion(X,Acc), A = Acc.
 
-lista_queso(0, []).
-lista_queso(N, Lista) :-
-    N > 0,
-    random(0, 3, NumQueso),
-    queso(NumQueso, Queso),
-    M is N - 1,
-    lista_queso(M, ListaRestante),
-    append([Queso], ListaRestante, Lista).
+/**Funcion que simula un paso al frente que hace el raton sin alterar su orientacion*/
 
-queso(0, normal).
-queso(1, vino).
-queso(2, veneno).
+movimiento((Xi,Yi),north,avanzar,(Xi,Yf)) :- Yf is Yi+1.
+movimiento((Xi,Yi),south,avanzar,(Xi,Yf)) :- Yf is Yi-1.
+movimiento((Xi,Yi),east,avanzar,(Xf,Yi))  :- Xf is Xi+1.
+movimiento((Xi,Yi),west,avanzar,(Xf,Yi))  :- Xf is Xi-1.
 
+/**Base de conocimientos que muestra el comportamiento del raton luego de comer un determinado queso de acuerdo a su estado actual*/
+
+tipoQueso(sobrio,normal,sobrio).
+tipoQueso(sobrio,veneno,sobrio).
+tipoQueso(sobrio,ron,ebrio).
+
+tipoQueso(ebrio,normal,ebrio).
+tipoQueso(ebrio,veneno,muerto).
+tipoQueso(ebrio,ron,ebrio).
+
+/**Funcion auxiliar que revisa el tipo de queso a comer y devolviendo el estado que tiene el raton despues de consumirlo*/
+
+comerQueso(Estado_Raton_I,T_Queso,Estado_Raton_F):-tipoQueso(Estado_Raton_I,T_Queso,Est), Estado_Raton_F = Est.
+
+
+
+% ------------------------------------------------------------------------------------------------------------------------------------------------------
+% *-------------------*
+% | PARTE DE SAMUEL   |
+% *-------------------*
 /*
-Crea un mapa dado:
-N: ancho del mapa, n > 0.
-M: alto, m > 0.
-(X,Y): la posición de la salida
-Mapa: el mapa creado, que es una lista de dimensión n x m.
+** Representación de Mini Laberinto de Pruebas **
+
+I   : Inicio.
+S   : Salida
+QR  : Queso con Ron.
+QV  : Queso con veneno.
+Q   : Queso solo.
+
+---------------------------
+6 |   |   |   |   |   |   |
+---------------------------
+5 |   |   |   |   | Q | S |
+---------------------------
+4 |   | Q |   |   |   |   |
+---------------------------
+3 |   |QV |   |   |   |   |
+---------------------------
+2 |   |   |   |   |   | Q |
+---------------------------
+1 | I |   |QV |QR |   |   |
+---------------------------
+    1   2   3   4   5    6
+
 */
-crear_mapa_salida(N, M, (X,Y), Mapa) :-
-    N > 0,
-    M > 0,
-    fila_vacia(N, Fila),
-    repetir(M, Fila, MapaVacio),
-    % Con esto se define cuántos quesos van a aparecer
-    % si se desea se puede disminuir o aumentar
-    Mitad is (N * M)/2,
-    Redondeado is ceiling(Mitad),
-    lista_queso(Redondeado, ListaDeQueso),
-    rellenar_queso(N, M, MapaVacio, ListaDeQueso, MapaConQueso),
-    agregar_salida((X,Y), MapaConQueso, Mapa).
-
-agregar_salida((X,Y), Mapa, MapaResultante) :-
-    nth0(Y, Mapa, Fila),
-    remplazar(Fila, X, salida, NuevaFila),
-    remplazar(Mapa, Y, NuevaFila, MapaResultante).
-
-posicion_salida(N, M, (X, Y)) :-
-    N > 0,
-    M > 0,
-    random(0, M, Y),
-    posicion_X(N, M, Y, X).
-
-/*
-Se usa para obtener la posición en X,
-ya que primero se plantea elegir la posición al azar el Y.
-Como la salida de la caja es a los costados, hay que moverse entre
-los lados si se está en medio o por toda la fila
-si se está al final/inicio
-*/
-posicion_X(N, M, Y, X) :-
-    Y =\= 0,
-    Ultimo is M - 1,
-    Y =\= Ultimo,
-    random(0, 2, Binario),
-    izq_derecha(Binario, N, X).
-
-posicion_X(N, _, Y, X) :-
-    Y == 0,
-    random(0, N, X).
-
-posicion_X(N, M, Y, X) :-
-    Ultimo is M - 1,
-    Y == Ultimo,
-    random(0, N, X).
-
-/*
-Elegir al azar si se usa la posición 0
-o final de una lista
-*/
-izq_derecha(0, _, 0).
-izq_derecha(1, X, Xf) :-
-    Xf is X - 1.
-
-fila_vacia(0, Fila) :-
-    append([], [], Fila).
-
-fila_vacia(N, Fila) :-
-    N > 0,
-    M is N -1,
-    fila_vacia(M, Lista),
-    append([vacio], Lista, Fila).
 
 /*
-Repite una lista dada y da como resultado una lista de listas
-N: Número de veces a repetir
-L: Lista a repetir
-Lista: Lista de lista resultantes
+Función que nos indica qué es una casilla dentro del mapa.
+SOLO PARA PRUEBAS
 */
-repetir(0, _, []).
-repetir(N, L, Lista) :-
-    N > 0,
-    N1 is N-1,
-    repetir(N1, L, Repetidos),
-    append([L], Repetidos, Lista).
+% Casillas importantes
+queEs((1,1),Qs) :- Qs = inicio.
+queEs((6,5),Qs) :- Qs = salida.
+% Casillas con Quesos
+queEs((2,4),Qs) :- Qs = normal.
+queEs((4,2),Qs) :- Qs = normal.
+queEs((5,5),Qs) :- Qs = normal.
+queEs((6,2),Qs) :- Qs = normal.
+queEs((2,3),Qs) :- Qs = normal.
+
+queEs((4,1),Qs) :- Qs = ron.
+
+queEs((3,1),Qs) :- Qs = veneno.
+% Casillas fuera del laverinto
+queEs((X,_),Qs) :- (X<1), Qs = fuera.
+queEs((_,Y),Qs) :- (Y<1), Qs = fuera.
+queEs((X,_),Qs) :- (X>6), Qs = fuera.
+queEs((_,Y),Qs) :- (Y>6), Qs = fuera.
+% % Casillas pared
+% queEs((X,_),Qs) :- (X=:=0), Qs = pared.
+% queEs((X,_),Qs) :- (X=:=7), Qs = pared.
+% queEs((_,Y),Qs) :- (Y=:=0), Qs = pared.
+% queEs((_,Y),Qs) :- (Y=:=7), Qs = pared.
+% Casillas dentro del laberinto pero sin queso
+queEs(_,Qs) :- Qs = vacio.
+
+
+
+/*
+Función que nos inica si hay queso en una casilla X,Y
+R : regresa el tipo de queso en la casilla. En caso de que no
+    haya queso la función regresa false.
+*/
+hayQueso((X,Y),normal) :- queEs((X,Y),normal).
+hayQueso((X,Y),ron)   :- queEs((X,Y),ron).
+hayQueso((X,Y),veneno) :- queEs((X,Y),veneno).
+
+/*
+Función que nos indica si hay una pared enfrente del ratón.
+(X,Y) : coodenadas (X,Y) en las que se encuentra el ratón.
+Oi    : orientación del ratón.
+*/
+paredEnfrente((X,Y),Oi) :-
+    movimiento((X,Y),Oi,avanzar,(Xf,Yf)),
+    queEs((Xf,Yf), fuera).
+
+/*
+Función que al llegar a topar con pared, da las vueltas necesarias para
+poder seguir avanzando.
+(X,Y) : coordenadas (X,Y) en las que se encuentra el ratón.
+Oi    : orientación inicial del ratón.
+Of    : orientación final, luego de girar a la izquierda n veces.
+*/
+buscaIzquierda((X,Y), Oi, Of) :-
+    movimientoGiro(Oi,giraI,Oc),
+    movimiento((X,Y),Oc, avanzar, (Xc,Yc)),
+    queEs((Xc,Yc),fuera),
+    buscaIzquierda((X,Y),Oc,Of).
+
+buscaIzquierda((X,Y), Oi, Of) :-
+    movimientoGiro(Oi,giraI,Oc),
+    movimiento((X,Y),Oc, avanzar, (Xc,Yc)),
+    queEs((Xc,Yc),Qs),
+    Qs \= fuera,
+    Of = Oc.
+
+/*
+Función que hace dar al ratón 7 pasos en dirección aleatoria.
+*/
+movAleatorio((X,Y), _, _, PsF) :-
+    hayQueso((X,Y),Tq),
+    comerQueso(ebrio, Tq, muerto),
+    write("\n\nEl ratón murio.\nPasos realizados antes de la muerte:\n\n"),
+    write(PsF).
+
+movAleatorio((X,Y), _, _, PsI) :-
+    queEs((X,Y), salida),
+    write("\n\nEl rató encontró la salida estando ebrio. \nPasos realizados: \n\n"),
+    write(PsI).
+
+movAleatorio((X,Y), Oi, 1, PsI) :-
+    generarMovimientoGiro(Giro),
+    movimientoGiro(Oi,Giro,Of),
+    movimiento((X,Y), Of, avanzar, (Xf,Yf)),
+    append(PsI, [(Xf,Yf)], PsF),
+    write("\nSe le bajo la borrachera al raton luego de 7 pasos aleatirios"),
+    buscarSalida((Xf,Yf), Of, sobrio, PsF).
+
+movAleatorio((X,Y), Oi, _, PsI) :-
+    paredEnfrente((X,Y),Oi),
+    write("\ntap tap tap... \n Se estrello contra la pared y se le pasó la borrachera al ratón.\n"),
+    buscaIzquierda((X,Y), Oi, Of),
+    movimiento((X,Y), Of, avanzar, (Xf,Yf)),
+    append(PsI, [(Xf,Yf)], PsF),
+    buscarSalida((Xf,Yf), Of, sobrio, PsF).
+
+movAleatorio((X,Y), Oi, PaD, PsI) :-
+    generarMovimientoGiro(Giro),
+    movimientoGiro(Oi,Giro,Of),
+    movimiento((X,Y), Of, avanzar, (Xf,Yf)),
+    append(PsI, [(Xf,Yf)], PsF),
+    PaF = PaD - 1, 
+    movAleatorio((Xf,Yf), Of, PaF, PsF).
+
+
+/*
+Función que hace buscar al raton la salida del laberinto.
+X    : coordenada X en la que se encuentra el ratón.
+Y    : coordenada Y en la que se encuentra el ratón.
+Oi   : orientación inicial del ratón.
+EstI : estado inicial en el que se encuentra el ratón.
+PsI  : lista de los pasos realizador por el ratón hasta ahora.
+*/
+
+buscarSalida((X,Y), _, _, PsI) :-
+    queEs((X,Y), salida),
+    write("\n\nEl rató encontró la salida. \nPasos realizados: \n\n"),
+    write(PsI).
+
+buscarSalida((X,Y), Oi, sobrio, PsI) :-
+    paredEnfrente((X,Y),Oi),
+    buscaIzquierda((X,Y), Oi, Of),
+    movimiento((X,Y), Of, avanzar, (Xf,Yf)),
+    append(PsI, [(Xf,Yf)], PsF),
+    buscarSalida((Xf,Yf), Oi, sobrio, PsF).
+
+buscarSalida((X,Y), Oi, EstI, PsI) :-
+    hayQueso((X,Y),Tq),
+    comerQueso(EstI, Tq, ebrio),
+    write("\nEl ratón se puso ebrio"),
+    movAleatorio((X,Y), Oi, 7, PsI).
+
+buscarSalida((X,Y), Oi, sobrio, PsI) :-
+    queEs((X,Y), vacio),
+    movimiento((X,Y), Oi, avanzar, (Xf,Yf)),
+    append(PsI, [(Xf,Yf)], PsF),
+    buscarSalida((Xf,Yf), Oi, sobrio, PsF).
+
+buscarSalida((X,Y), Oi, EstI, PsI) :- 
+    hayQueso((X,Y),Tq),
+    comerQueso(EstI, Tq, sobrio),
+    movimiento((X,Y), Oi, avanzar, (Xf,Yf)),
+    append(PsI, [(Xf,Yf)], PsF),
+    buscarSalida((Xf,Yf), Oi, sobrio, PsF).
